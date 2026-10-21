@@ -1,0 +1,68 @@
+services:
+
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+#    ports:
+#      - "53:53/tcp"
+#      - "53:53/udp"
+#      - "8081:80/tcp"
+    environment:
+      TZ: "Europe/Warsaw"
+      FTLCONF_webserver_api_password: "{PIHOLE_PASSWORD}"
+      FTLCONF_dns_listeningMode: "all"
+    volumes:
+      - ./config/pihole:/etc/pihole
+    network_mode:
+      host
+
+  samba:
+    image: dockurr/samba:latest
+    container_name: samba
+    restart: unless-stopped
+    ports:
+      - "445:445/tcp"
+    environment:
+      NAME: "dane"
+      USER: "uzytkownik"
+      PASS: "{SAMBA_PASSWORD}"
+      UID: "1000"
+      GID: "1000"
+    volumes:
+      - /mnt/dane:/storage
+
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:latest
+    container_name: syncthing
+    restart: unless-stopped
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Europe/Warsaw"
+    ports:
+      - "8384:8384/tcp"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    volumes:
+      - ./config/syncthing:/config
+      - /mnt/dane/syncthing:/data
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    user: "1000:1000"
+    group_add:
+      - "${RENDER_GID:-105}"
+    ports:
+      - "8096:8096/tcp"
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./config/jellyfin:/config
+      - ./cache/jellyfin:/cache
+      - /mnt/dane/filmy:/media/filmy:ro
