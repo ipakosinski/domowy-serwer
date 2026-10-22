@@ -12,7 +12,7 @@ services:
 #      - "8081:80/tcp"
     environment:
       TZ: "Europe/Warsaw"
-      FTLCONF_webserver_api_password: "{PIHOLE_PASSWORD}"
+      FTLCONF_webserver_api_password: "${PIHOLE_PASSWORD}"
       FTLCONF_dns_listeningMode: "all"
     volumes:
       - ./config/pihole:/etc/pihole
@@ -24,11 +24,11 @@ services:
     container_name: samba
     restart: unless-stopped
     ports:
-      - "445:445/tcp"
+      - "192.168.8.117:445:445/tcp"
     environment:
       NAME: "dane"
       USER: "uzytkownik"
-      PASS: "{SAMBA_PASSWORD}"
+      PASS: "${SAMBA_PASSWORD}"
       UID: "1000"
       GID: "1000"
     volumes:
@@ -43,7 +43,7 @@ services:
       PGID: "1000"
       TZ: "Europe/Warsaw"
     ports:
-      - "8384:8384/tcp"
+      - "192.168.8.117:8384:8384/tcp"
       - "22000:22000/tcp"
       - "22000:22000/udp"
       - "21027:21027/udp"
@@ -59,7 +59,7 @@ services:
     group_add:
       - "${RENDER_GID:-105}"
     ports:
-      - "8096:8096/tcp"
+      - "192.168.8.117:8096:8096/tcp"
     devices:
       - /dev/dri:/dev/dri
     volumes:
