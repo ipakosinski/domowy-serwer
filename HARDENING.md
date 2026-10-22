@@ -5,8 +5,8 @@
 ## Wynik audytu Lynis
 | Moment | Hardening index |
 |---|---|
-| Przed zmianami | XX |
-| Po zmianach | XX |
+| Przed zmianami | 60 |
+| Po zmianach | 64 |
 
 ## Wprowadzone zmiany
 
