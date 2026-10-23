@@ -28,6 +28,11 @@ Zainstalowano `unattended-upgrades`, poprawki bezpieczeństwa instalują się au
 ### 4. Fail2ban
 Ochrona SSH przed zgadywaniem haseł: 5 nieudanych prób blokuje adres na godzinę.
 
+### 5. Uptime Kuma
+- panel (port 3001) dostępny wyłącznie z sieci domowej: nasłuch na adresie serwera i reguła ufw ograniczona do 192.168.8.0/24
+- konto administratora zabezpieczone dwuskładnikowo
+- adres webhooka Discord i adres push trzymane poza repozytorium
+
 ## Weryfikacja
 - logowanie hasłem jest odrzucane (`Permission denied (publickey)`)
 - `ufw status verbose` pokazuje aktywną zaporę

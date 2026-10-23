@@ -8,7 +8,7 @@ Domowy serwer postawiony na starym komputerze Dell OptiPlex (i5-4590, 8 GB RAM, 
 - **Syncthing** - synchronizacja plików (np. zdjęcia z telefonu)
 - **Jellyfin** - serwer multimediów z akceleracją sprzętową (Intel Quick Sync, VAAPI)
 - **Tailscale** - bezpieczny dostęp zdalny (VPN)
-
+- **Uptime Kuma** - monitoring dostępności usług, powiadomienia na Discordzie
 ## Architektura
 
     Internet
@@ -76,6 +76,21 @@ Kopie konfiguracji wykonuje **restic** (szyfrowane, przyrostowe, z deduplikacją
 - Dane użytkownika (filmy, zdjęcia) nie są objęte tą kopią.
 - Hasło do repozytorium jest niezbędne do odzyskania danych i musi być przechowywane poza serwerem.
 
+## Monitoring
+Dostępność usług monitoruje **Uptime Kuma**, a o awariach informuje powiadomieniem na Discordzie.
+
+- **Monitorowane:** Jellyfin (HTTP `/health`), Syncthing i Samba (port TCP), Pi-hole (zapytanie DNS), router i internet (ping) oraz kopia zapasowa (monitor typu push).
+- **Powiadomienia:** Discord (webhook), z dwoma powtórzeniami przed alarmem, żeby ograniczyć fałszywe alarmy.
+- **Monitor kopii zapasowej:** skrypt kopii wysyła sygnał do Uptime Kuma po udanej kopii. Brak sygnału przez ponad dobę oznacza alarm, więc zepsuta lub niewykonana kopia nie pozostaje niezauważona.
+- **Dostęp:** panel `http://192.168.8.117:3001` tylko z sieci domowej, konto z dwuskładnikowym logowaniem.
+- **Dane:** `config/uptime-kuma`, objęte kopią zapasową.
+
+### Dlaczego tryb sieci host
+Uptime Kuma sprawdza usługi przez adres serwera. W zwykłej sieci Dockera jego zapytania miałyby adres z podsieci Dockera, a zapora ufw wpuszcza tylko ruch z sieci domowej. Tryb host omija ten problem i pozwala sprawdzać także Pi-hole (również w trybie host). Cena: panel podlega regułom ufw (reguła ograniczona do 192.168.8.0/24).
+
+### Sekrety
+Adres webhooka Discord i adres push (`/root/kuma-push-url`) są trzymane poza repozytorium.
+
 ## Napotkane problemy i rozwiązania
 - **Pi-hole nie odpowiadał na DNS** - w logach błąd o braku capability NET_ADMIN. Rozwiązanie: `cap_add: NET_ADMIN` w konfiguracji kontenera.
 - **Port 53 zajęty** - domyślnie nasłuchuje na nim systemd-resolved. Rozwiązanie: wyłączenie DNSStubListener.
@@ -86,6 +101,6 @@ Kopie konfiguracji wykonuje **restic** (szyfrowane, przyrostowe, z deduplikacją
 - **Porty Dockera omijają ufw** - Docker modyfikuje iptables bezpośrednio. Rozwiązanie: przypięcie portów do adresu serwera w `docker-compose.yml`.
 
 ## Plany rozwoju
-- Monitoring (Uptime Kuma, Grafana)
+- Rozbudowany monitoring (Prometheus, Grafana)
 - Reverse proxy z HTTPS
 - Osobny firewall (OPNsense) i segmentacja sieci
