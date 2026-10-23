@@ -36,4 +36,3 @@ Ochrona SSH przed zgadywaniem haseł: 5 nieudanych prób blokuje adres na godzin
 ## Do zrobienia
 - przejrzeć pozostałe sugestie Lynisa
 - ograniczyć uprawnienia kontenerów (read-only, no-new-privileges)
-- kopie zapasowe konfiguracji

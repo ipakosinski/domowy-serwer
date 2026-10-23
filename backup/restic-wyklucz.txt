@@ -1,0 +1,7 @@
+/home/admin1/serwer/config/pihole/pihole-FTL.db*
+/home/admin1/serwer/config/jellyfin/metadata
+/home/admin1/serwer/config/jellyfin/cache
+/home/admin1/serwer/config/jellyfin/transcodes
+/home/admin1/serwer/config/jellyfin/log
+/home/admin1/serwer/config/syncthing/log
+*.log

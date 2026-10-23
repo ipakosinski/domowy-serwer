@@ -49,6 +49,33 @@ Ograniczenia: zależność od zewnętrznego serwisu koordynującego połączenia
 
 Wynik testu z sieci komórkowej: Jellyfin otwiera się z telefonu na danych komórkowych po włączeniu Tailscale
 
+## Kopie zapasowe
+Kopie konfiguracji wykonuje **restic** (szyfrowane, przyrostowe, z deduplikacją).
+
+- **Zakres:** `docker-compose.yml`, `.env`, folder `config/` (Pi-hole, Syncthing, Jellyfin), konfiguracja SSH, fail2ban, ufw, systemd-resolved, `fstab`, `authorized_keys`.
+- **Poza zakresem:** dane użytkownika (filmy, zdjęcia), cache, logi, historia zapytań Pi-hole i metadane Jellyfina (pobierają się ponownie), stan Tailscale (ponowne logowanie).
+- **Lokalizacja:** repozytorium na HDD (`/mnt/dane/kopie/restic`) oraz ręcznie aktualizowana kopia na zewnętrznym nośniku.
+- **Harmonogram:** codziennie o 11:30 (cron). Na czas kopii kontenery są zatrzymywane, żeby bazy SQLite były spójne.
+- **Retencja:** 7 kopii dziennych, 4 tygodniowe, 6 miesięcznych.
+- **Weryfikacja:** `restic check` po każdej kopii oraz test odtworzenia do katalogu tymczasowego.
+- **Hasło repozytorium:** plik `/root/restic-haslo` (poza Gitem) oraz zapis w menedżerze haseł.
+- **Skrypt:** [backup/backup-serwera.sh](backup/backup-serwera.sh), lista wykluczeń w [backup/restic-wyklucz.txt](backup/restic-wyklucz.txt).
+
+### Odtwarzanie po awarii
+1. Zainstaluj system, Docker i restic.
+2. Zamontuj HDD w `/mnt/dane` (lub podłącz nośnik z kopią).
+3. Odtwórz pliki:
+
+        sudo restic -r /mnt/dane/kopie/restic --password-file /root/restic-haslo restore latest --target /
+
+4. Uruchom usługi: `cd ~/serwer && docker compose up -d`.
+5. Zaloguj ponownie Tailscale (`sudo tailscale up`).
+
+### Ograniczenia
+- Kopia na HDD i oryginał na SSD to dwa dyski w jednym urządzeniu, dlatego potrzebna jest druga kopia na zewnętrznym nośniku (wykonywana ręcznie).
+- Dane użytkownika (filmy, zdjęcia) nie są objęte tą kopią.
+- Hasło do repozytorium jest niezbędne do odzyskania danych i musi być przechowywane poza serwerem.
+
 ## Napotkane problemy i rozwiązania
 - **Pi-hole nie odpowiadał na DNS** - w logach błąd o braku capability NET_ADMIN. Rozwiązanie: `cap_add: NET_ADMIN` w konfiguracji kontenera.
 - **Port 53 zajęty** - domyślnie nasłuchuje na nim systemd-resolved. Rozwiązanie: wyłączenie DNSStubListener.
@@ -59,7 +86,6 @@ Wynik testu z sieci komórkowej: Jellyfin otwiera się z telefonu na danych kom�
 - **Porty Dockera omijają ufw** - Docker modyfikuje iptables bezpośrednio. Rozwiązanie: przypięcie portów do adresu serwera w `docker-compose.yml`.
 
 ## Plany rozwoju
-- Kopie zapasowe konfiguracji (restic)
 - Monitoring (Uptime Kuma, Grafana)
 - Reverse proxy z HTTPS
 - Osobny firewall (OPNsense) i segmentacja sieci
