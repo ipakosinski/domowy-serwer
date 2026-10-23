@@ -66,3 +66,13 @@ services:
       - ./config/jellyfin:/config
       - ./cache/jellyfin:/cache
       - /mnt/dane/filmy:/media/filmy:ro
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    container_name: uptime-kuma
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      UPTIME_KUMA_HOST: "192.168.8.117"
+    volumes:
+      - ./config/uptime-kuma:/app/data
