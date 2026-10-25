@@ -9,6 +9,7 @@ Domowy serwer postawiony na starym komputerze Dell OptiPlex (i5-4590, 8 GB RAM, 
 - **Jellyfin** - serwer multimediów z akceleracją sprzętową (Intel Quick Sync, VAAPI)
 - **Tailscale** - bezpieczny dostęp zdalny (VPN)
 - **Uptime Kuma** - monitoring dostępności usług, powiadomienia na Discordzie
+- **Nginx Proxy Manager** - reverse proxy z certyfikatami HTTPS (Let's Encrypt)
 ## Architektura
 
     Internet
@@ -16,11 +17,13 @@ Domowy serwer postawiony na starym komputerze Dell OptiPlex (i5-4590, 8 GB RAM, 
     Router 4G (192.168.8.1, WAN w CGNAT)
         |
         +-- Serwer (192.168.8.117, rezerwacja DHCP)
-        |     +-- Pi-hole   (DNS 53, panel 80)
+        |     +-- Pi-hole   (DNS 53, panel 8081)
         |     +-- Samba     (445)
         |     +-- Syncthing (8384, 22000)
         |     +-- Jellyfin  (8096)
         |     +-- Tailscale (VPN)
+        |     +-- Uptime Kuma (3001)
+        |     +-- Nginx Proxy Manager (80, 443)
         +-- Komputery i telefony w sieci domowej
 
 Konfiguracje kontenerów leżą na SSD (`./config`), a dane na HDD (`/mnt/dane`).
@@ -91,6 +94,26 @@ Uptime Kuma sprawdza usługi przez adres serwera. W zwykłej sieci Dockera jego 
 ### Sekrety
 Adres webhooka Discord i adres push (`/root/kuma-push-url`) są trzymane poza repozytorium.
 
+## Reverse proxy i HTTPS
+Usługi są dostępne pod nazwami z certyfikatem HTTPS (np. `https://jellyfin.nazwa.duckdns.org`) zamiast adresów z numerami portów. Całość obsługuje **Nginx Proxy Manager**.
+
+- **Domena:** darmowa subdomena DuckDNS z certyfikatem wildcard (`*.nazwa.duckdns.org`).
+- **Certyfikaty:** Let's Encrypt, weryfikacja metodą **DNS-01** (rekord TXT w DuckDNS). Nie wymaga otwartych portów ani publicznego adresu IP, więc działa za CGNAT. Odnawianie jest automatyczne.
+- **Nazwy w sieci domowej:** lokalne rekordy DNS w Pi-hole wskazują na adres serwera.
+- **Proxy hosty:** Jellyfin, Syncthing, Uptime Kuma, panel Pi-hole (WebSockets włączone tam, gdzie są wymagane).
+- **Dostęp:** wyłącznie z sieci domowej (ufw), nic nie jest wystawione do internetu.
+- **Monitoring:** Uptime Kuma sprawdza adres HTTPS i ostrzega przed wygaśnięciem certyfikatu.
+- **Dane:** `config/npm`, objęte kopią zapasową. Token DuckDNS jest przechowywany tylko w ustawieniach NPM.
+
+### Decyzje
+- **Port panelu Pi-hole zmieniony z 80 na 8081**, bo Pi-hole w trybie `host` zajmował porty 80 i 443 potrzebne reverse proxy.
+- **Nginx Proxy Manager w trybie `host`**, z tego samego powodu co Uptime Kuma: kontener ma docierać do usług przez adres serwera bez blokowania przez ufw.
+- **DuckDNS zamiast własnej domeny:** darmowy, obsługuje wildcard i walidację DNS-01. Ograniczenie: zależność od zewnętrznej usługi.
+
+### Ograniczenia
+- Nazwy działają w sieci domowej. Spoza domu (Tailscale) wymagają dodatkowej konfiguracji DNS.
+- Jeśli DuckDNS będzie niedostępny w czasie odnawiania, certyfikat może wygasnąć (alarm w Uptime Kuma).
+
 ## Napotkane problemy i rozwiązania
 - **Pi-hole nie odpowiadał na DNS** - w logach błąd o braku capability NET_ADMIN. Rozwiązanie: `cap_add: NET_ADMIN` w konfiguracji kontenera.
 - **Port 53 zajęty** - domyślnie nasłuchuje na nim systemd-resolved. Rozwiązanie: wyłączenie DNSStubListener.
@@ -102,5 +125,4 @@ Adres webhooka Discord i adres push (`/root/kuma-push-url`) są trzymane poza re
 
 ## Plany rozwoju
 - Rozbudowany monitoring (Prometheus, Grafana)
-- Reverse proxy z HTTPS
 - Osobny firewall (OPNsense) i segmentacja sieci

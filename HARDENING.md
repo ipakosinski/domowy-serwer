@@ -33,6 +33,11 @@ Ochrona SSH przed zgadywaniem haseł: 5 nieudanych prób blokuje adres na godzin
 - konto administratora zabezpieczone dwuskładnikowo
 - adres webhooka Discord i adres push trzymane poza repozytorium
 
+### 6. Reverse proxy (Nginx Proxy Manager)
+- szyfrowanie ruchu HTTPS certyfikatem Let's Encrypt, walidacja DNS-01 (bez otwierania portów)
+- porty 80, 81 (panel NPM), 443 i 8081 (panel Pi-hole) dostępne tylko z sieci domowej (ufw)
+- token DuckDNS przechowywany wyłącznie w ustawieniach NPM, poza repozytorium
+
 ## Weryfikacja
 - logowanie hasłem jest odrzucane (`Permission denied (publickey)`)
 - `ufw status verbose` pokazuje aktywną zaporę

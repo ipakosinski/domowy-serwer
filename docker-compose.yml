@@ -14,6 +14,7 @@ services:
       TZ: "Europe/Warsaw"
       FTLCONF_webserver_api_password: "${PIHOLE_PASSWORD}"
       FTLCONF_dns_listeningMode: "all"
+      FTLCONF_webserver_port: "8081"
     volumes:
       - ./config/pihole:/etc/pihole
     network_mode:
@@ -76,3 +77,12 @@ services:
       UPTIME_KUMA_HOST: "192.168.8.117"
     volumes:
       - ./config/uptime-kuma:/app/data
+
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: npm
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./config/npm/data:/data
+      - ./config/npm/letsencrypt:/etc/letsencrypt
